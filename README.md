@@ -1,6 +1,6 @@
-# Projet de Génération de Fiches Produit Automobile
+# Projet de Génération de Fiches Produit Avec l'IA Générative
 
-## Mon parcours de développement
+## J'ai choisi des fiches de produit automobile
 
 ### Mise en place initiale
 
@@ -29,6 +29,8 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
+![image](https://github.com/user-attachments/assets/f85277bf-7c5d-4b8b-ae18-0f275e60033b)
+
 
 La difficulté principale a été de gérer correctement le cycle de vie des tokens JWT. J'ai dû :
 1. Implémenter un système de tokens d'accès et de rafraîchissement
