@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-container">
+    <h1>Connexion</h1>
+    
+    {% if message %}
+    <div class="info-message">{{ message }}</div>
+    {% endif %}
+    
+    <div id="error-message" class="error-message" style="display: none;"></div>
+    <div id="success-message" class="success-message" style="display: none;"></div>
+    
+    <form id="login-form" class="auth-form">
+        <div class="form-group">
+            <label for="username">Nom d'utilisateur ou Email</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+            <a href="/register" class="btn btn-link">Créer un compte</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .auth-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .form-group label {
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .form-group input {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background-color: #e8491d;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #d43d10;
+    }
+    
+    .btn-link {
+        color: #35424a;
+    }
+    
+    .error-message {
+        background-color: #ffebee;
+        color: #c62828;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        border-left: 4px solid #c62828;
+    }
+    
+    .success-message {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        border-left: 4px solid #2e7d32;
+    }
+    
+    .info-message {
+        background-color: #e3f2fd;
+        color: #1565c0;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        border-left: 4px solid #1565c0;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('login-form');
+        const errorMessage = document.getElementById('error-message');
+        
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Masquer les messages d'erreur précédents
+            errorMessage.style.display = 'none';
+            
+            // Appel API pour la connexion
+            fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Stocker les tokens dans le localStorage
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('refresh_token', data.refresh_token);
+                    
+                    // Afficher le message de succès avant de rediriger
+                    const successMessage = document.getElementById('success-message');
+                    successMessage.textContent = 'Connexion réussie! Redirection vers le tableau de bord...';
+                    successMessage.style.display = 'block';
+                    
+                    // Créer un formulaire qui va transmettre le token en POST
+                    console.log('Préparation du token pour redirection sécurisée');
+                    
+                    // Créer un formulaire caché pour soumettre le token
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/dashboard';
+                    form.style.display = 'none';
+                    
+                    // Ajouter le token comme champ caché
+                    const tokenField = document.createElement('input');
+                    tokenField.type = 'hidden';
+                    tokenField.name = 'token';
+                    tokenField.value = data.access_token;
+                    form.appendChild(tokenField);
+                    
+                    // Ajouter le formulaire au document et l'envoyer
+                    document.body.appendChild(form);
+                    
+                    // Montrer le message de redirection
+                    successMessage.textContent = 'Connexion réussie! Redirection vers le tableau de bord...';
+                    successMessage.style.display = 'block';
+                    
+                    // Soumettre le formulaire après un court délai pour que l'utilisateur voie le message
+                    setTimeout(() => {
+                        form.submit();
+                    }, 500);
+                } else {
+                    // Afficher le message d'erreur
+                    errorMessage.textContent = data.message || 'Erreur de connexion. Veuillez réessayer.';
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                errorMessage.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+                errorMessage.style.display = 'block';
+            });
+        });
+    });
+</script>
+{% endblock %}

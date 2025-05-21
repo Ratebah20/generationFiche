@@ -1,0 +1,570 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>Tableau de bord</h1>
+        <div class="user-info">
+            <span>Bienvenue, <strong id="user-name">{{ user.username }}</strong></span>
+            <button id="logout-btn" class="btn btn-danger">Déconnexion</button>
+        </div>
+    </div>
+    
+    <div class="dashboard-content">
+        <div class="dashboard-card">
+            <h2>Vos informations</h2>
+            <div id="user-profile">
+                <div class="profile-info">
+                    <span class="info-label">Nom d'utilisateur :</span>
+                    <span class="info-value">{{ user.username }}</span>
+                </div>
+                <div class="profile-info" id="email-info">
+                    <span class="info-label">Email :</span>
+                    <span class="info-value"></span>
+                </div>
+                <div class="profile-info" id="role-info">
+                    <span class="info-label">Rôle :</span>
+                    <span class="info-value">{{ 'Administrateur' if user.is_admin else 'Utilisateur' }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-card">
+            <h2>Fonctionnalités</h2>
+            <div class="feature-buttons">
+                <button id="my-profile-btn" class="feature-btn">Mon Profil</button>
+                <button id="change-password-btn" class="feature-btn">Changer de mot de passe</button>
+                {% if user.is_admin %}
+                <button id="admin-panel-btn" class="feature-btn admin-feature">Panneau d'administration</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="profile-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Mon Profil</h2>
+        <div id="profile-error" class="error-message" style="display: none;"></div>
+        <div id="profile-success" class="success-message" style="display: none;"></div>
+        
+        <form id="profile-form" class="profile-form">
+            <div class="form-group">
+                <label for="profile-email">Email</label>
+                <input type="email" id="profile-email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="profile-first-name">Prénom</label>
+                <input type="text" id="profile-first-name" name="first_name">
+            </div>
+            <div class="form-group">
+                <label for="profile-last-name">Nom</label>
+                <input type="text" id="profile-last-name" name="last_name">
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="password-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Changer de mot de passe</h2>
+        <div id="password-error" class="error-message" style="display: none;"></div>
+        <div id="password-success" class="success-message" style="display: none;"></div>
+        
+        <form id="password-form" class="password-form">
+            <div class="form-group">
+                <label for="current-password">Mot de passe actuel</label>
+                <input type="password" id="current-password" name="current_password" required>
+            </div>
+            <div class="form-group">
+                <label for="new-password">Nouveau mot de passe</label>
+                <input type="password" id="new-password" name="new_password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm-password">Confirmer le mot de passe</label>
+                <input type="password" id="confirm-password" name="confirm_password" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Changer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .dashboard-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .dashboard-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .dashboard-card {
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-info {
+        margin-bottom: 10px;
+        display: flex;
+    }
+    
+    .info-label {
+        width: 150px;
+        font-weight: bold;
+        color: #555;
+    }
+    
+    .feature-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    
+    .feature-btn {
+        padding: 12px;
+        background-color: #35424a;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    
+    .feature-btn:hover {
+        background-color: #2a343a;
+    }
+    
+    .admin-feature {
+        background-color: #e8491d;
+    }
+    
+    .admin-feature:hover {
+        background-color: #d43d10;
+    }
+    
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+    
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+    
+    .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+        border-radius: 5px;
+    }
+    
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+    }
+    
+    .error-message {
+        background-color: #ffebee;
+        color: #c62828;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        border-left: 4px solid #c62828;
+    }
+    
+    .success-message {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        border-left: 4px solid #2e7d32;
+    }
+    
+    /* Form styles */
+    .profile-form, .password-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .form-group label {
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .form-group input {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 10px;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    
+    .btn-primary {
+        background-color: #e8491d;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #d43d10;
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-content {
+            grid-template-columns: 1fr;
+        }
+        
+        .feature-buttons {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Vérifier si l'utilisateur est connecté (token présent)
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        // Récupérer les informations de l'utilisateur
+        fetchUserInfo();
+        
+        // Gestion de la déconnexion
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            window.location.href = '/login';
+        });
+        
+        // Gestion des modales
+        const profileModal = document.getElementById('profile-modal');
+        const passwordModal = document.getElementById('password-modal');
+        const profileBtn = document.getElementById('my-profile-btn');
+        const passwordBtn = document.getElementById('change-password-btn');
+        const closeBtns = document.getElementsByClassName('close');
+        
+        profileBtn.addEventListener('click', function() {
+            profileModal.style.display = 'block';
+            fillProfileForm();
+        });
+        
+        passwordBtn.addEventListener('click', function() {
+            passwordModal.style.display = 'block';
+        });
+        
+        // Fermer les modales
+        for (let i = 0; i < closeBtns.length; i++) {
+            closeBtns[i].addEventListener('click', function() {
+                profileModal.style.display = 'none';
+                passwordModal.style.display = 'none';
+                
+                // Réinitialiser les formulaires et messages
+                document.getElementById('profile-error').style.display = 'none';
+                document.getElementById('profile-success').style.display = 'none';
+                document.getElementById('password-error').style.display = 'none';
+                document.getElementById('password-success').style.display = 'none';
+            });
+        }
+        
+        // Fermer les modales en cliquant à l'extérieur
+        window.addEventListener('click', function(event) {
+            if (event.target == profileModal) {
+                profileModal.style.display = 'none';
+                document.getElementById('profile-error').style.display = 'none';
+                document.getElementById('profile-success').style.display = 'none';
+            }
+            if (event.target == passwordModal) {
+                passwordModal.style.display = 'none';
+                document.getElementById('password-error').style.display = 'none';
+                document.getElementById('password-success').style.display = 'none';
+            }
+        });
+        
+        // Soumission du formulaire de profil
+        document.getElementById('profile-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const profileError = document.getElementById('profile-error');
+            const profileSuccess = document.getElementById('profile-success');
+            profileError.style.display = 'none';
+            profileSuccess.style.display = 'none';
+            
+            const email = document.getElementById('profile-email').value;
+            const firstName = document.getElementById('profile-first-name').value;
+            const lastName = document.getElementById('profile-last-name').value;
+            
+            updateProfile(email, firstName, lastName, profileSuccess, profileError);
+        });
+        
+        // Soumission du formulaire de changement de mot de passe
+        document.getElementById('password-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const passwordError = document.getElementById('password-error');
+            const passwordSuccess = document.getElementById('password-success');
+            passwordError.style.display = 'none';
+            passwordSuccess.style.display = 'none';
+            
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (newPassword !== confirmPassword) {
+                passwordError.textContent = 'Les mots de passe ne correspondent pas.';
+                passwordError.style.display = 'block';
+                return;
+            }
+            
+            if (newPassword.length < 8) {
+                passwordError.textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
+                passwordError.style.display = 'block';
+                return;
+            }
+            
+            changePassword(currentPassword, newPassword, passwordSuccess, passwordError);
+        });
+        
+        // Fonction pour récupérer les infos utilisateur
+        function fetchUserInfo() {
+            fetch('/api/auth/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Si le token est expiré, essayer de le rafraîchir
+                    if (response.status === 401) {
+                        refreshToken();
+                    }
+                    throw new Error('Erreur de récupération des données');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.user) {
+                    const user = data.user;
+                    
+                    // Mettre à jour les informations de l'utilisateur sur la page
+                    document.querySelector('#email-info .info-value').textContent = user.email;
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+            });
+        }
+        
+        // Fonction pour remplir le formulaire de profil
+        function fillProfileForm() {
+            fetch('/api/auth/me', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.user) {
+                    const user = data.user;
+                    document.getElementById('profile-email').value = user.email || '';
+                    document.getElementById('profile-first-name').value = user.first_name || '';
+                    document.getElementById('profile-last-name').value = user.last_name || '';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+            });
+        }
+        
+        // Fonction pour mettre à jour le profil
+        function updateProfile(email, firstName, lastName, successElement, errorElement) {
+            fetch('/api/auth/me', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    email: email,
+                    first_name: firstName,
+                    last_name: lastName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    successElement.textContent = 'Profil mis à jour avec succès.';
+                    successElement.style.display = 'block';
+                    
+                    // Mettre à jour les informations visibles
+                    document.querySelector('#email-info .info-value').textContent = email;
+                    
+                    // Mettre à jour après 2 secondes
+                    setTimeout(() => {
+                        fetchUserInfo();
+                    }, 2000);
+                } else {
+                    errorElement.textContent = data.message || 'Erreur lors de la mise à jour du profil.';
+                    errorElement.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                errorElement.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+                errorElement.style.display = 'block';
+            });
+        }
+        
+        // Fonction pour changer le mot de passe
+        function changePassword(currentPassword, newPassword, successElement, errorElement) {
+            fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    current_password: currentPassword,
+                    new_password: newPassword
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    successElement.textContent = 'Mot de passe modifié avec succès.';
+                    successElement.style.display = 'block';
+                    
+                    // Réinitialiser le formulaire
+                    document.getElementById('password-form').reset();
+                } else {
+                    errorElement.textContent = data.message || 'Erreur lors du changement de mot de passe.';
+                    errorElement.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                errorElement.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+                errorElement.style.display = 'block';
+            });
+        }
+        
+        // Fonction pour rafraîchir le token
+        function refreshToken() {
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (!refreshToken) {
+                // Rediriger vers la page de connexion si pas de token de rafraîchissement
+                window.location.href = '/login';
+                return;
+            }
+            
+            fetch('/api/auth/refresh', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${refreshToken}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.access_token) {
+                    // Mettre à jour le token d'accès
+                    localStorage.setItem('access_token', data.access_token);
+                    // Recharger la page
+                    window.location.reload();
+                } else {
+                    // Rediriger vers la page de connexion en cas d'échec
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    window.location.href = '/login';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                // Rediriger vers la page de connexion en cas d'erreur
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                window.location.href = '/login';
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-4">Historique des fiches produit</h1>
+            <p class="lead">Retrouvez toutes les fiches produit que vous avez générées.</p>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <a href="{{ url_for('generate_product_page') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Générer une nouvelle fiche
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Retour au tableau de bord
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+    </div>
+    {% endif %}
+
+    {% if fiches and fiches|length > 0 %}
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom du produit</th>
+                            <th>Type de modèle</th>
+                            <th>Options</th>
+                            <th>Date de création</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fiche in fiches %}
+                        <tr>
+                            <td>{{ fiche.product_name }}</td>
+                            <td>
+                                {% if fiche.model_type == 'detailed' %}
+                                <span class="badge bg-info">Détaillé</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Standard</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if fiche.include_images %}
+                                <span class="badge bg-success me-1" title="Inclut des images"><i class="fas fa-image"></i></span>
+                                {% endif %}
+                                {% if fiche.include_price %}
+                                <span class="badge bg-primary me-1" title="Inclut les prix"><i class="fas fa-tag"></i></span>
+                                {% endif %}
+                                {% if fiche.include_comparison %}
+                                <span class="badge bg-warning me-1" title="Inclut des comparaisons"><i class="fas fa-balance-scale"></i></span>
+                                {% endif %}
+                            </td>
+                            <td>{{ fiche.created_at.strftime('%d/%m/%Y %H:%M') if fiche.created_at else 'N/A' }}</td>
+                            <td>
+                                <a href="{{ url_for('view_fiche', fiche_id=fiche.id) }}" class="btn btn-sm btn-primary me-1" title="Voir la fiche">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger" title="Supprimer" onclick="confirmDelete({{ fiche.id }}, '{{ fiche.product_name }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-file-alt fa-4x mb-3 text-muted"></i>
+                    <h3>Aucune fiche générée</h3>
+                    <p class="text-muted">Vous n'avez pas encore généré de fiches produit.</p>
+                    <a href="{{ url_for('generate_product_page') }}" class="btn btn-primary mt-3">
+                        Générer votre première fiche
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="deleteModalBody">
+                Êtes-vous sûr de vouloir supprimer cette fiche ?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">Supprimer</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDelete(ficheId, productName) {
+        // Mettre à jour le contenu de la modal
+        document.getElementById('deleteModalBody').innerHTML = `Êtes-vous sûr de vouloir supprimer la fiche <strong>${productName}</strong> ?`;
+        
+        // Mettre à jour le lien de confirmation
+        // Note: La route de suppression n'est pas encore implémentée
+        document.getElementById('confirmDeleteBtn').href = `/api/delete-fiche/${ficheId}`;
+        
+        // Afficher la modal
+        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+</script>
+{% endblock %}

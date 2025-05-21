@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Application Flask</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+            padding: 20px;
+        }
+        header {
+            background: #35424a;
+            color: white;
+            padding: 20px;
+            min-height: 70px;
+            border-bottom: #e8491d 3px solid;
+        }
+        header a {
+            color: #ffffff;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-size: 16px;
+        }
+        header li {
+            float: left;
+            display: inline;
+            padding: 0 20px 0 20px;
+        }
+        header #branding {
+            float: left;
+        }
+        header #branding h1 {
+            margin: 0;
+        }
+        header nav {
+            float: right;
+            margin-top: 10px;
+        }
+        header .highlight, header .current a {
+            color: #e8491d;
+            font-weight: bold;
+        }
+        header a:hover {
+            color: #cccccc;
+            font-weight: bold;
+        }
+        
+        /* Styles pour les boutons d'authentification */
+        .auth-nav {
+            margin-left: 20px;
+        }
+        
+        .btn-login, .btn-register, .btn-dashboard, .btn-logout {
+            padding: 8px 15px;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        
+        .btn-login, .btn-dashboard {
+            background-color: #e8491d;
+            color: white;
+        }
+        
+        .btn-register {
+            background-color: #35424a;
+            border: 1px solid #e8491d;
+            color: white;
+        }
+        
+        .btn-logout {
+            background-color: #777;
+            color: white;
+        }
+        
+        .btn-login:hover, .btn-dashboard:hover {
+            background-color: #d43d10;
+        }
+        
+        .btn-register:hover {
+            background-color: #2a343a;
+        }
+        
+        .btn-logout:hover {
+            background-color: #666;
+        }
+        footer {
+            padding: 20px;
+            margin-top: 20px;
+            color: #ffffff;
+            background-color: #35424a;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div id="branding">
+                <h1><span class="highlight">Flask</span> Application</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/">Accueil</a></li>
+                    <li><a href="/apropos">À propos</a></li>
+                    <li class="auth-nav">
+                        <span id="auth-links-logged-out" style="display: none;">
+                            <a href="/login" class="btn-login">Connexion</a>
+                            <a href="/register" class="btn-register">Inscription</a>
+                        </span>
+                        <span id="auth-links-logged-in" style="display: none;">
+                            <a href="/dashboard" class="btn-dashboard">Tableau de bord</a>
+                            <a href="/generate-product" class="btn-dashboard">Générer Produit</a>
+                            <a href="#" id="btn-logout" class="btn-logout">Déconnexion</a>
+                        </span>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <footer>
+        <p>Application Flask minimaliste &copy; 2025</p>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier si l'utilisateur est connecté (token présent dans localStorage)
+            const token = localStorage.getItem('access_token');
+            const loggedOutLinks = document.getElementById('auth-links-logged-out');
+            const loggedInLinks = document.getElementById('auth-links-logged-in');
+            
+            if (token) {
+                // Utilisateur connecté
+                loggedInLinks.style.display = 'inline';
+                loggedOutLinks.style.display = 'none';
+                
+                // Gérer la déconnexion
+                document.getElementById('btn-logout').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Supprimer les tokens du localStorage
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    // Rediriger vers la page d'accueil
+                    window.location.href = '/';
+                });
+            } else {
+                // Utilisateur non connecté
+                loggedInLinks.style.display = 'none';
+                loggedOutLinks.style.display = 'inline';
+            }
+        });
+    </script>
+</body>
+</html>

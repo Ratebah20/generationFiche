@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="mb-0">{{ fiche.product_name }}</h1>
+                <div>
+                    <a href="{{ url_for('history_page') }}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-2"></i>Retour à l'historique
+                    </a>
+                    <a href="{{ url_for('generate_product_page') }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>Nouvelle fiche
+                    </a>
+                </div>
+            </div>
+            <div class="text-muted mb-4">
+                <small>Généré le {{ fiche.created_at.strftime('%d/%m/%Y à %H:%M') if fiche.created_at else 'N/A' }}</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Informations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Type de modèle :</strong>
+                        <div>
+                            {% if fiche.model_type == 'detailed' %}
+                            <span class="badge bg-info">Détaillé</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Standard</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Options :</strong>
+                        <div class="mt-2">
+                            {% if fiche.include_images %}
+                            <div class="mb-1">
+                                <span class="badge bg-success me-1"><i class="fas fa-image"></i></span>
+                                Images
+                            </div>
+                            {% endif %}
+                            {% if fiche.include_price %}
+                            <div class="mb-1">
+                                <span class="badge bg-primary me-1"><i class="fas fa-tag"></i></span>
+                                Prix
+                            </div>
+                            {% endif %}
+                            {% if fiche.include_comparison %}
+                            <div class="mb-1">
+                                <span class="badge bg-warning me-1"><i class="fas fa-balance-scale"></i></span>
+                                Comparaisons
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" id="copyBtn" onclick="copyContent()">
+                            <i class="fas fa-copy me-2"></i>Copier
+                        </button>
+                        <button class="btn btn-outline-success" id="printBtn" onclick="printContent()">
+                            <i class="fas fa-print me-2"></i>Imprimer
+                        </button>
+                        <button class="btn btn-outline-info" id="downloadPdfBtn">
+                            <i class="fas fa-file-pdf me-2"></i>Télécharger PDF
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="confirmDelete({{ fiche.id }}, '{{ fiche.product_name }}')">
+                            <i class="fas fa-trash me-2"></i>Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Contenu de la fiche</h5>
+                </div>
+                <div class="card-body">
+                    <div id="ficheContent" class="fiche-content">
+                        {{ fiche.generated_content|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="deleteModalBody">
+                Êtes-vous sûr de vouloir supprimer cette fiche ?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger">Supprimer</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Fonction pour copier le contenu de la fiche
+    function copyContent() {
+        const content = document.getElementById('ficheContent').innerHTML;
+        
+        // Créer un élément temporaire
+        const tempElement = document.createElement('div');
+        tempElement.innerHTML = content;
+        
+        // Extraire le texte sans les balises HTML
+        const textContent = tempElement.textContent || tempElement.innerText;
+        
+        // Copier dans le presse-papier
+        navigator.clipboard.writeText(textContent).then(() => {
+            // Changer temporairement le texte du bouton
+            const copyBtn = document.getElementById('copyBtn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check me-2"></i>Copié !';
+            
+            // Rétablir le texte original après 2 secondes
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        }).catch(err => {
+            console.error('Erreur lors de la copie :', err);
+            alert('Impossible de copier le contenu. Veuillez réessayer.');
+        });
+    }
+    
+    // Fonction pour imprimer le contenu
+    function printContent() {
+        const content = document.getElementById('ficheContent').innerHTML;
+        const productName = "{{ fiche.product_name }}";
+        
+        // Créer une fenêtre d'impression
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Fiche produit - ${productName}</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                <style>
+                    body {
+                        font-family: 'Poppins', sans-serif;
+                        padding: 20px;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                    }
+                    .footer {
+                        text-align: center;
+                        margin-top: 30px;
+                        font-size: 0.8em;
+                        color: #6c757d;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>${productName}</h1>
+                    <p>Généré le {{ fiche.created_at.strftime('%d/%m/%Y à %H:%M') if fiche.created_at else 'N/A' }}</p>
+                </div>
+                <div class="content">
+                    ${content}
+                </div>
+                <div class="footer">
+                    <p>Généré avec l'application de génération de fiches produit</p>
+                </div>
+            </body>
+            </html>
+        `);
+        
+        // Déclencher l'impression
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 1000);
+    }
+    
+    // Fonction pour confirmer la suppression
+    function confirmDelete(ficheId, productName) {
+        // Mettre à jour le contenu de la modal
+        document.getElementById('deleteModalBody').innerHTML = `Êtes-vous sûr de vouloir supprimer la fiche <strong>${productName}</strong> ?`;
+        
+        // Mettre à jour le lien de confirmation
+        // Note: La route de suppression n'est pas encore implémentée
+        document.getElementById('confirmDeleteBtn').href = `/api/delete-fiche/${ficheId}`;
+        
+        // Afficher la modal
+        var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+    
+    // Initialisation des tooltips Bootstrap
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+
+<style>
+    .fiche-content {
+        line-height: 1.6;
+    }
+    .fiche-content h1, .fiche-content h2, .fiche-content h3 {
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .fiche-content ul, .fiche-content ol {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}

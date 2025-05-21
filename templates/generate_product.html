@@ -1,0 +1,807 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-5 bg-light">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- En-tête de la page avec animation -->
+            <div class="text-center mb-5 animate__animated animate__fadeIn">
+                <h1 class="display-4 fw-bold text-primary">Génération de Fiche Produit Automobile</h1>
+                <p class="lead text-dark">Notre intelligence artificielle crée des fiches détaillées pour tous véhicules automobiles</p>
+                <div class="d-flex justify-content-center">
+                    <div class="divider-custom">
+                        <div class="divider-custom-line"></div>
+                        <div class="divider-custom-icon"><i class="fas fa-car"></i></div>
+                        <div class="divider-custom-line"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panneau principal -->
+            <div class="row">
+                <!-- Panneau de génération -->
+                <div class="col-md-5 mb-4">
+                    <div class="card shadow-lg border-0 rounded-lg h-100">
+                        <div class="card-header bg-gradient-primary text-white">
+                            <h3 class="mb-0"><i class="fas fa-cogs me-2"></i>Paramètres de génération</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info border-start border-info border-4">
+                                <i class="fas fa-info-circle me-2"></i> Entrez les détails du véhicule pour générer une fiche complète et optimisée.
+                            </div>
+                            
+                            <div id="errorMessage" class="alert alert-danger border-start border-danger border-4" style="display: none;"></div>
+                            
+                            <form id="generateForm" class="mb-3">
+                                <div class="mb-4">
+                                    <label for="productName" class="form-label fw-bold">Nom du véhicule</label>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text bg-light"><i class="fas fa-car-alt"></i></span>
+                                        <input type="text" class="form-control form-control-lg" id="productName" name="productName" 
+                                               placeholder="Ex: Renault Clio 5, Peugeot 3008..." required>
+                                    </div>
+                                    <div class="form-text">Soyez précis pour obtenir une fiche détaillée de qualité.</div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold">Modèle de génération</label>
+                                    <div class="d-flex">
+                                        <div class="form-check me-3">
+                                            <input class="form-check-input" type="radio" name="modelType" id="modelStandard" value="standard" checked>
+                                            <label class="form-check-label" for="modelStandard">Standard</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="modelType" id="modelDetailed" value="detailed">
+                                            <label class="form-check-label" for="modelDetailed">Détaillé</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Options de génération -->
+                                <div class="border p-3 mb-4 rounded bg-light">
+                                    <p class="fw-bold mb-2">Options de fiche</p>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="includeImages" checked>
+                                        <label class="form-check-label" for="includeImages">Inclure suggestions d'images</label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="includePrice" checked>
+                                        <label class="form-check-label" for="includePrice">Estimation de prix</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeComparaison">
+                                        <label class="form-check-label" for="includeComparaison">Comparaison concurrents</label>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-magic me-2"></i> Générer la fiche produit
+                                </button>
+                            </form>
+                            
+                            <!-- Indicateur de chargement avec animation -->
+                            <div id="loadingIndicator" class="text-center my-4" style="display: none;">
+                                <div class="loading-container">
+                                    <div class="car-container">
+                                        <div class="car">
+                                            <div class="body">
+                                                <div class="front"></div>
+                                                <div class="back"></div>
+                                            </div>
+                                            <div class="wheel wheel1"></div>
+                                            <div class="wheel wheel2"></div>
+                                        </div>
+                                    </div>
+                                    <div class="road"></div>
+                                </div>
+                                <p class="lead mt-3">Génération en cours, veuillez patienter...</p>
+                                <div class="progress mt-2" style="height: 10px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Panneau de résultat -->
+                <div class="col-md-7 mb-4">
+                    <div id="resultCard" class="card shadow-lg border-0 rounded-lg" style="display: none;">
+                        <div class="card-header bg-gradient-success text-white d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0" id="resultTitle"><i class="fas fa-file-alt me-2"></i>Fiche produit</h3>
+                            <div class="btn-group">
+                                <button id="copyButton" class="btn btn-light btn-sm">
+                                    <i class="fas fa-copy me-1"></i> Copier
+                                </button>
+                                <button id="printButton" class="btn btn-light btn-sm">
+                                    <i class="fas fa-print me-1"></i> Imprimer
+                                </button>
+                                <button id="downloadButton" class="btn btn-light btn-sm">
+                                    <i class="fas fa-download me-1"></i> PDF
+                                </button>
+                                <button id="shareButton" class="btn btn-light btn-sm">
+                                    <i class="fas fa-share-alt me-1"></i> Partager
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body result-container">
+                            <div id="generatedContent" class="product-sheet p-3"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Guide d'utilisation -->
+                    <div id="guide" class="card shadow-sm border-0 rounded-lg mt-4">
+                        <div class="card-header bg-light">
+                            <h4 class="mb-0"><i class="fas fa-lightbulb me-2 text-warning"></i>Guide d'utilisation</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <h5><i class="fas fa-check-circle text-success me-2"></i>Comment ça marche ?</h5>
+                                        <p>Notre IA génère des fiches produit détaillées sur les véhicules de votre choix en quelques secondes.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <h5><i class="fas fa-star text-warning me-2"></i>Conseils pour de meilleurs résultats</h5>
+                                        <p>Soyez précis dans le nom du véhicule et sélectionnez les options appropriées pour une fiche optimisée.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="alert alert-light border mt-2 mb-0">
+                                <strong>Astuce Pro :</strong> Vous pouvez générer plusieurs fiches et les comparer pour trouver la présentation la plus adaptée à vos besoins.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Exemples de générations récentes -->
+            <div class="card shadow-sm border-0 mt-2 mb-5">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0"><i class="fas fa-history me-2 text-secondary"></i>Générations récentes</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-0 shadow-sm example-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Renault Mégane E-Tech</h5>
+                                    <p class="card-text text-muted">Généré le 21/05/2025</p>
+                                    <span class="badge bg-primary me-1">SUV</span>
+                                    <span class="badge bg-success">Électrique</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-0 shadow-sm example-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Peugeot 3008 GT</h5>
+                                    <p class="card-text text-muted">Généré le 20/05/2025</p>
+                                    <span class="badge bg-primary me-1">SUV</span>
+                                    <span class="badge bg-secondary">Hybride</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-0 shadow-sm example-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Tesla Model Y</h5>
+                                    <p class="card-text text-muted">Généré le 19/05/2025</p>
+                                    <span class="badge bg-primary me-1">Crossover</span>
+                                    <span class="badge bg-success">Électrique</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const generateForm = document.getElementById('generateForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const resultCard = document.getElementById('resultCard');
+    const resultTitle = document.getElementById('resultTitle');
+    const generatedContent = document.getElementById('generatedContent');
+    const copyButton = document.getElementById('copyButton');
+    const printButton = document.getElementById('printButton');
+    const downloadButton = document.getElementById('downloadButton');
+    const shareButton = document.getElementById('shareButton');
+    const exampleCards = document.querySelectorAll('.example-card');
+    
+    // Vérifier si le token JWT est disponible
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        errorMessage.textContent = 'Vous n\'avez pas été authentifié. Veuillez vous connecter à nouveau.';
+        errorMessage.style.display = 'block';
+        setTimeout(() => {
+            window.location.href = '/login?message=Veuillez+vous+connecter+pour+acc%C3%A9der+%C3%A0+la+g%C3%A9n%C3%A9ration+de+produit';
+        }, 2000);
+        return;
+    }
+    
+    // Gestionnaire d'événements pour les cartes d'exemples
+    exampleCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const title = this.querySelector('.card-title').textContent;
+            document.getElementById('productName').value = title;
+            // Faire défiler jusqu'au formulaire
+            document.getElementById('generateForm').scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+    
+    // Gestionnaire d'événements pour le formulaire
+    generateForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Masquer les messages d'erreur précédents
+        errorMessage.style.display = 'none';
+        
+        // Récupérer le nom du produit
+        const productName = document.getElementById('productName').value.trim();
+        
+        if (!productName) {
+            errorMessage.textContent = 'Veuillez entrer un nom de produit.';
+            errorMessage.style.display = 'block';
+            return;
+        }
+        
+        // Afficher l'indicateur de chargement
+        loadingIndicator.style.display = 'block';
+        resultCard.style.display = 'none';
+        
+        // Récupérer les options sélectionnées
+        const modelType = document.querySelector('input[name="modelType"]:checked').value;
+        const includeImages = document.getElementById('includeImages').checked;
+        const includePrice = document.getElementById('includePrice').checked;
+        const includeComparaison = document.getElementById('includeComparaison').checked;
+        
+        // Envoyer la requête à l'API avec le token JWT dans l'en-tête
+        fetch('/api/generate-product', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+                product_name: productName,
+                model_type: modelType,
+                include_images: includeImages,
+                include_price: includePrice,
+                include_comparison: includeComparaison
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Masquer l'indicateur de chargement
+            loadingIndicator.style.display = 'none';
+            
+            if (data.success) {
+                // Afficher le résultat
+                resultTitle.textContent = `Fiche produit : ${data.product_name}`;
+                generatedContent.innerHTML = data.content;
+                resultCard.style.display = 'block';
+                
+                // Ajouter un badge de modèle
+                const modelBadge = document.createElement('span');
+                modelBadge.className = `badge bg-info me-2`;
+                modelBadge.textContent = modelType === 'detailed' ? 'Version détaillée' : 'Version standard';
+                resultTitle.insertAdjacentElement('afterend', modelBadge);
+                
+                // Date de génération
+                const dateBadge = document.createElement('span');
+                dateBadge.className = 'badge bg-secondary me-2';
+                dateBadge.textContent = `Généré le ${new Date().toLocaleDateString()}`;
+                resultTitle.insertAdjacentElement('afterend', dateBadge);
+                
+                // Faire défiler jusqu'au résultat avec animation douce
+                resultCard.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                // Afficher le message d'erreur
+                errorMessage.textContent = data.message || 'Une erreur s\'est produite lors de la génération.';
+                errorMessage.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            // Masquer l'indicateur de chargement
+            loadingIndicator.style.display = 'none';
+            
+            // Afficher le message d'erreur
+            errorMessage.textContent = 'Erreur de connexion au serveur.';
+            errorMessage.style.display = 'block';
+            console.error('Erreur:', error);
+        });
+    });
+    
+    // Fonction pour copier le contenu généré
+    copyButton.addEventListener('click', function() {
+        const range = document.createRange();
+        range.selectNode(generatedContent);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand('copy');
+        window.getSelection().removeAllRanges();
+        
+        // Feedback visuel
+        const originalText = copyButton.innerHTML;
+        copyButton.innerHTML = '<i class="fas fa-check"></i> Copié!';
+        setTimeout(() => {
+            copyButton.innerHTML = originalText;
+        }, 2000);
+    });
+    
+    // Fonction pour imprimer le contenu
+    printButton.addEventListener('click', function() {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Fiche produit: ${resultTitle.textContent.replace('Fiche produit : ', '')}</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+                    <style>
+                        body { padding: 20px; font-family: 'Arial', sans-serif; }
+                        .product-header { margin-bottom: 30px; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+                        .product-title { color: #2c3e50; }
+                        .product-badge { display: inline-block; background-color: #3498db; color: white; padding: 5px 10px; border-radius: 3px; margin: 5px; font-size: 12px; }
+                        .product-date { color: #7f8c8d; font-style: italic; }
+                        .product-footer { margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px; text-align: center; font-size: 12px; color: #95a5a6; }
+                    </style>
+                </head>
+                <body>
+                    <div class="product-header">
+                        <h1 class="product-title">${resultTitle.textContent}</h1>
+                        <div>
+                            <span class="product-badge"><i class="fas fa-calendar-alt"></i> Généré le ${new Date().toLocaleDateString()}</span>
+                            <span class="product-badge"><i class="fas fa-car"></i> Automobile</span>
+                        </div>
+                    </div>
+                    <div class="product-content">
+                        ${generatedContent.innerHTML}
+                    </div>
+                    <div class="product-footer">
+                        <p>Document généré par l'Intelligence Artificielle - Application de Génération de Fiches Produit Automobile</p>
+                    </div>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        setTimeout(() => {
+            printWindow.print();
+        }, 500);
+    });
+    
+    // Fonction pour télécharger en PDF
+    downloadButton.addEventListener('click', function() {
+        // Afficher un message de téléchargement
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 end-0 m-3';
+        notification.innerHTML = `
+            <i class="fas fa-file-pdf me-2"></i> Préparation du PDF en cours...
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.appendChild(notification);
+        
+        // Simuler le délai de génération PDF (comme nous n'avons pas de générateur PDF côté client)
+        setTimeout(() => {
+            notification.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i> PDF généré avec succès !
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            notification.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3';
+            
+            // Dans un cas réel, nous utiliserions un plugin comme jsPDF ou html2pdf.js
+            // Pour cette démo, nous redirigeons simplement vers la version d'impression
+            const printWindow = window.open('', '_blank');
+            const productName = resultTitle.textContent.replace('Fiche produit : ', '').trim();
+            
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Fiche produit PDF: ${productName}</title>
+                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+                        <style>
+                            body { padding: 20px; font-family: 'Arial', sans-serif; }
+                            .pdf-header { text-align: center; margin-bottom: 20px; }
+                            .pdf-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 100px; opacity: 0.1; color: #e74c3c; pointer-events: none; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="pdf-header">
+                            <h1 style="color: #2c3e50;">Fiche Produit: ${productName}</h1>
+                            <p class="text-muted">Version PDF générée le ${new Date().toLocaleString()}</p>
+                        </div>
+                        <div class="pdf-watermark">PDF</div>
+                        <div class="pdf-content">
+                            ${generatedContent.innerHTML}
+                        </div>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            
+            // Supprimer la notification après 3 secondes
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }, 1500);
+    });
+    
+    // Fonction pour partager
+    shareButton.addEventListener('click', function() {
+        // Créer un menu de partage simple
+        const shareMenu = document.createElement('div');
+        shareMenu.className = 'share-menu position-absolute bg-white rounded shadow-lg p-3';
+        shareMenu.style.right = '0';
+        shareMenu.style.top = '40px';
+        shareMenu.style.zIndex = '1000';
+        shareMenu.style.width = '200px';
+        
+        // Options de partage
+        const shareOptions = [
+            { name: 'Email', icon: 'fa-envelope', color: '#3498db' },
+            { name: 'WhatsApp', icon: 'fa-whatsapp', color: '#25D366' },
+            { name: 'Facebook', icon: 'fa-facebook', color: '#3b5998' },
+            { name: 'Twitter', icon: 'fa-twitter', color: '#1DA1F2' },
+            { name: 'LinkedIn', icon: 'fa-linkedin', color: '#0077b5' }
+        ];
+        
+        // Créer les boutons de partage
+        shareOptions.forEach(option => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-sm d-flex align-items-center mb-2 w-100';
+            btn.style.color = option.color;
+            btn.innerHTML = `<i class="fab ${option.icon} me-2"></i> ${option.name}`;
+            
+            btn.addEventListener('click', function() {
+                // Fermer le menu de partage
+                shareMenu.remove();
+                
+                // Simuler le partage
+                const productName = resultTitle.textContent.replace('Fiche produit : ', '').trim();
+                const notification = document.createElement('div');
+                notification.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 end-0 m-3';
+                notification.innerHTML = `
+                    <i class="fas fa-share-alt me-2"></i> Partage de "${productName}" via ${option.name}...
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                document.body.appendChild(notification);
+                
+                // Fermer la notification après 3 secondes
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            });
+            
+            shareMenu.appendChild(btn);
+        });
+        
+        // Fermer le menu si on clique ailleurs
+        document.addEventListener('click', function closeMenu(e) {
+            if (!shareMenu.contains(e.target) && e.target !== shareButton) {
+                shareMenu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+        
+        // Ajouter le menu au DOM
+        const btnContainer = shareButton.parentElement;
+        btnContainer.style.position = 'relative';
+        btnContainer.appendChild(shareMenu);
+    });
+});
+</script>
+
+<style>
+/* Importation de la police Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Styles globaux */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa; /* Fond plus clair */
+    color: #343a40; /* Couleur de texte principale */
+}
+
+.container-fluid {
+    padding-top: 4rem; /* Augmenter l'espacement en haut */
+    padding-bottom: 4rem;
+}
+
+/* Titres de page */
+.display-4 {
+    font-weight: 600; /* Police plus audacieuse pour le titre principal */
+    color: #2c3e50; /* Couleur de titre plus foncée */
+}
+
+.lead {
+    color: #495057; /* Couleur de texte secondaire plus douce */
+}
+
+/* Séparateur personnalisé */
+.divider-custom {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2.5rem 0; /* Espacement accru */
+}
+
+.divider-custom-line {
+    flex-grow: 0;
+    width: 80px; /* Lignes plus courtes */
+    height: 4px;
+    background-color: #007bff; /* Couleur primaire de Bootstrap */
+    border-radius: 2px;
+    margin: 0 1rem;
+}
+
+.divider-custom-icon {
+    color: #007bff;
+    font-size: 2.5rem;
+}
+
+/* Styles pour les cartes */
+.card {
+    border: none; /* Supprimer les bordures par défaut */
+    border-radius: 0.75rem; /* Bords plus arrondis */
+    transition: all 0.3s ease-in-out;
+}
+
+.card-header {
+    border-bottom: none; /* Supprimer la bordure de l'en-tête de carte */
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    padding: 1.5rem; /* Plus de padding */
+}
+
+.card-header h3, .card-header h4 {
+    font-weight: 500; /* Police d'en-tête de carte légèrement plus légère */
+}
+
+.card-body {
+    padding: 2rem; /* Padding accru pour le corps de la carte */
+}
+
+.shadow-lg {
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1) !important; /* Ombre plus douce et plus étendue */
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3); /* Dégradé bleu moderne */
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745, #1e7e34); /* Dégradé vert moderne */
+}
+
+/* Formulaires */
+.form-label {
+    font-weight: 500;
+}
+
+.form-control-lg {
+    padding: 0.75rem 1.25rem; /* Contrôles de formulaire plus grands */
+    font-size: 1rem;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.input-group-text {
+    background-color: #e9ecef; /* Fond plus clair pour les icônes de groupe d'entrée */
+    border: 1px solid #ced4da;
+}
+
+/* Boutons */
+.btn {
+    font-weight: 500;
+    padding: 0.6rem 1.25rem;
+    border-radius: 0.3rem; /* Bords de bouton légèrement plus arrondis */
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+.btn-light {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #212529;
+}
+
+.btn-light:hover {
+    background-color: #e2e6ea;
+    border-color: #dae0e5;
+}
+
+/* Alertes */
+.alert {
+    border-radius: 0.3rem;
+    padding: 1rem 1.25rem;
+}
+
+.alert-info {
+    background-color: #e6f7ff; /* Fond d'alerte info plus clair */
+    border-color: #91d5ff;
+    color: #005280;
+}
+
+.alert-danger {
+    background-color: #ffebe6; /* Fond d'alerte danger plus clair */
+    border-color: #ffb399;
+    color: #800000;
+}
+
+/* Animation de chargement */
+.loading-container {
+    position: relative;
+    width: 150px; /* Taille de l'animation ajustée */
+    height: 80px;
+    margin: 1rem auto;
+}
+
+.car-container {
+    position: absolute;
+    width: 50px;
+    height: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    animation: drive 2.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+}
+
+.car .body {
+    background-color: #007bff;
+}
+.car .wheel {
+    background-color: #343a40;
+}
+.road {
+    background-color: #adb5bd;
+}
+
+@keyframes drive {
+    0% { left: -20px; opacity: 0; }
+    20% { left: calc(50% - 25px); opacity: 1; }
+    80% { left: calc(50% - 25px); opacity: 1; }
+    100% { left: calc(100% + 20px); opacity: 0; }
+}
+
+/* Cartes d'exemples */
+.example-card {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.example-card:hover {
+    transform: translateY(-8px) scale(1.02); /* Effet de survol plus prononcé */
+    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Conteneur de résultats */
+.result-container {
+    max-height: 70vh; /* Hauteur maximale basée sur la hauteur de la fenêtre */
+    overflow-y: auto;
+    background-color: #ffffff; /* Fond blanc pour la zone de résultat */
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.product-sheet {
+    font-family: 'Poppins', sans-serif;
+}
+
+.product-sheet h1, .product-sheet h2, .product-sheet h3 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.product-sheet h1 {
+    font-size: 2rem; /* Titre principal plus grand */
+    border-bottom: 3px solid #007bff;
+    padding-bottom: 0.75rem;
+}
+
+.product-sheet h2 {
+    font-size: 1.6rem;
+    color: #343a40;
+}
+
+.product-sheet h3 {
+    font-size: 1.3rem;
+    color: #495057;
+}
+
+.product-sheet ul {
+    padding-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.product-sheet ul li {
+    margin-bottom: 0.5rem;
+}
+
+.product-sheet p {
+    margin-bottom: 1.25rem;
+    line-height: 1.7;
+    color: #495057;
+}
+
+.product-sheet section {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed #dee2e6; /* Séparateur de section plus subtil */
+}
+
+.product-sheet section:last-child {
+    border-bottom: none;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.4em 0.7em;
+}
+
+/* Animations générales (si Animate.css n'est pas chargé globalement) */
+.animate__animated {
+    animation-duration: 1s;
+}
+
+.animate__fadeIn {
+    animation-name: fadeIn;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Menu de partage */
+.share-menu .btn {
+    text-align: left;
+    border: none;
+    background-color: transparent;
+}
+
+.share-menu .btn:hover {
+    background-color: #f1f3f5;
+}
+
+/* Améliorations responsives pour le padding */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    .card-body, .card-header {
+        padding: 1.5rem;
+    }
+    .product-sheet h1 { font-size: 1.8rem; }
+    .product-sheet h2 { font-size: 1.4rem; }
+}
+
+</style>
+</style>
+{% endblock %}
