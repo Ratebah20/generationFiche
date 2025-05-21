@@ -46,7 +46,23 @@ La difficulté principale a été de gérer correctement le cycle de vie des tok
 
 3. **Création de routes API RESTful pour l'authentification** :
    - `/api/auth/register` : Création de compte avec validation des données et hachage sécurisé des mots de passe
+     
+    ![image](https://github.com/user-attachments/assets/8b598eb1-deba-4768-8a70-b886de4f862f)
+
    - `/api/auth/login` : Authentification et émission des tokens JWT
+
+      ![image](https://github.com/user-attachments/assets/78865fae-085c-4fdb-90ac-755c5f2466d9)
+
+   - Une fois le login réussi on est redirigé automatiquement dans la page dashboard avec les info de utilisateur
+  
+     ![image](https://github.com/user-attachments/assets/2f70e1ef-4de8-415c-b6ed-9916907833c9)
+
+    - L'utilisateur peut changer son mots de passe et ses informations
+  
+    ![image](https://github.com/user-attachments/assets/67b4785c-91dd-415f-8b90-81c700885187)
+    ![image](https://github.com/user-attachments/assets/12abca7d-6508-4d5d-86bf-d32fb32d1637)
+
+     
    - `/api/auth/refresh` : Renouvellement du token d'accès via le token de rafraîchissement
    - `/api/auth/logout` : Invalidation des tokens (côté client uniquement, les JWT étant stateless)
 
@@ -55,8 +71,6 @@ La difficulté principale a été de gérer correctement le cycle de vie des tok
    - Extraction des informations utilisateur du token pour les rendre disponibles dans le contexte de la requête
    - Gestion des erreurs d'authentification avec des messages appropriés
    - Mise en place de différents niveaux d'autorisation (utilisateur standard, administrateur)
-
-Un défi particulier a été la gestion des tokens côté client. J'ai utilisé `localStorage` pour stocker les tokens, mais cela a posé des problèmes de sécurité que j'ai dû résoudre (notamment la vulnérabilité aux attaques XSS). J'ai également dû gérer les cas où le token est présent dans différents contextes (en-tête Authorization, session Flask, formulaire POST).
 
 #### Cas d'utilisation : Processus complet d'authentification et d'accès sécurisé
 
@@ -154,8 +168,6 @@ Le plus grand défi a été de construire des prompts efficaces qui produisent d
    system_message = {"role": "system", "content": "Tu es un expert en marketing automobile qui crée des fiches produit détaillées et professionnelles."}
    ```
 
-Cette approche m'a permis d'obtenir des résultats cohérents et de haute qualité, adaptés aux besoins spécifiques de chaque demande.
-
 #### Optimisation des paramètres de génération
 
 J'ai expérimenté avec différents paramètres pour trouver l'équilibre optimal entre créativité et cohérence :
@@ -177,13 +189,34 @@ payload = {
 
 Pour l'interface utilisateur, j'ai opté pour Bootstrap comme framework CSS de base, que j'ai personnalisé pour obtenir un design moderne. J'ai utilisé des polices Google Fonts pour améliorer la typographie et Font pour les icônes.
 
+![image](https://github.com/user-attachments/assets/61b5ac30-187f-48fd-8087-c62b0a3a095a)
+
+
 J'ai particulièrement travaillé sur la page de génération de produit (`generate_product.html`), en créant une interface en deux colonnes qui permet à l'utilisateur de :
 - Saisir le nom du produit
 - Choisir entre un modèle standard ou détaillé
 - Sélectionner des options comme l'inclusion d'images, de prix ou de comparaisons
 - Visualiser immédiatement le résultat généré
 
-L'implémentation des fonctionnalités JavaScript pour copier, imprimer et télécharger les fiches a été un défi intéressant. J'ai dû travailler avec l'API Clipboard et créer des fenêtres d'impression personnalisées.
+![image](https://github.com/user-attachments/assets/151602f9-f9b0-4ba7-9b76-a45fdd602341)
+
+![image](https://github.com/user-attachments/assets/be6d16d7-bb4b-4f4f-ab65-09a4f2d5008f)
+
+![image](https://github.com/user-attachments/assets/16884044-241a-4a04-a463-87b4927930a1)
+
+## Résultat après génération 
+
+![image](https://github.com/user-attachments/assets/86a9f9e5-f59d-4eda-90f7-b89c4a7dddb4)
+
+![image](https://github.com/user-attachments/assets/c3167bcc-ceea-4e57-9b9c-9c9553bf321f)
+
+### Ensuite en appuyant sur imprimer on peut le exporter en PDF en utilisant l'outil de Google 
+
+![image](https://github.com/user-attachments/assets/5557dcd3-6602-4082-a9dc-891f78a69298)
+
+
+L'implémentation des fonctionnalités JavaScript pour copier, imprimer et télécharger les fiches.
+J'ai dû travailler avec l'API Clipboard et créer des fenêtres d'impression personnalisées.
 
 ### Historisation des fiches générées
 
@@ -210,7 +243,17 @@ CREATE TABLE generated_fiches (
 );
 ```
 
+![image](https://github.com/user-attachments/assets/ad8a1577-c874-4ded-b9f8-7bee9cedb73e)
+
+
 J'ai ensuite créé des fonctions pour sauvegarder et récupérer les fiches, ainsi que des pages pour afficher l'historique et consulter les fiches individuelles. Cette fonctionnalité a ajouté beaucoup de valeur à l'application, permettant aux utilisateurs de retrouver facilement leurs créations précédentes.
+
+En se rendant dans l'URL http://localhost:5000/history
+
+on peut voir l'historique de l'utilisateur 
+
+![image](https://github.com/user-attachments/assets/e25fffe1-d122-4ef2-a06a-e6fdf9a014fd)
+
 
 ### Défis techniques et solutions
 
@@ -239,4 +282,4 @@ Ce projet m'a permis de mettre en pratique de nombreuses compétences en dévelo
 - Conception d'interfaces utilisateur modernes
 - Gestion de base de données relationnelle
 
-Les défis rencontrés m'ont poussé à approfondir ma compréhension de ces technologies et à trouver des solutions créatives. Le résultat est une application fonctionnelle et professionnelle qui répond parfaitement au besoin initial : générer des fiches produit de qualité pour des véhicules automobiles.
+Les défis rencontrés m'ont poussé à approfondir ma compréhension de ces technologies et à trouver des solutions créatives. Le résultat est une application fonctionnelle et professionnelle qui répond parfaitement au besoin initial : générer des fiches produit avec l'IA pour des véhicules automobiles.
